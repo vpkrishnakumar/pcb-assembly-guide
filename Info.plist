@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>PCB Assembly Guide</string>
+    <key>CFBundleDisplayName</key>
+    <string>PCB Assembly Guide</string>
+    <key>CFBundleIdentifier</key>
+    <string>local.pcb-assembly-guide</string>
+    <key>CFBundleExecutable</key>
+    <string>PCBAssemblyGuide</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.2</string>
+    <key>CFBundleVersion</key>
+    <string>2</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.developer-tools</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Voice control listens for "next", "back" and "skip" so you can step through the assembly hands-free.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Voice control recognises "next", "back" and "skip" so you can step through the assembly hands-free.</string>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>KiCad Board</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>local.pcb-assembly-guide.kicad-pcb</string>
+            </array>
+        </dict>
+    </array>
+    <key>UTImportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>local.pcb-assembly-guide.kicad-pcb</string>
+            <key>UTTypeDescription</key>
+            <string>KiCad Board</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>kicad_pcb</string>
+                </array>
+            </dict>
+        </dict>
+    </array>
+</dict>
+</plist>
