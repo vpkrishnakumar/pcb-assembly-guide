@@ -35,6 +35,13 @@ class PackageTests(unittest.TestCase):
         self.assertLessEqual(len(m["description"]), 150)
         self.assertLessEqual(len(m["description_full"]), 1000)
         self.assertRegex(m["identifier"], r"^[a-zA-Z][-a-zA-Z0-9.]{0,48}[a-zA-Z0-9]$")
+        for tag in m["tags"]:
+            self.assertRegex(tag, r"^[a-z][-a-z0-9]{0,48}[a-z0-9]$")
+        for key in m["resources"]:
+            self.assertRegex(key, r"^[a-zA-Z][-a-zA-Z0-9 ]{0,48}[a-zA-Z0-9]$")
+        for key in m["author"]["contact"]:
+            self.assertRegex(key, r"^[a-z][-a-z0-9 ]{0,48}[a-z0-9]$")
+        self.assertRegex(m["versions"][0]["kicad_version"], r"^\d{1,2}(\.\d{1,2}(\.\d{1,2})?)?$")
         for version in m["versions"]:
             self.assertRegex(version["version"], r"^\d{1,4}(\.\d{1,4}(\.\d{1,6})?)?$")
             # The copy inside the archive must not carry the download details.

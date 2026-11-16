@@ -16,7 +16,7 @@
     "homepage": "https://github.com/vpkrishnakumar/pcb-assembly-guide",
     "issues": "https://github.com/vpkrishnakumar/pcb-assembly-guide/issues"
   },
-  "tags": ["assembly", "soldering", "bom", "3d", "fabrication"],
+  "tags": ["assembly", "soldering", "bom", "guide", "fabrication"],
   "versions": [
     {
       "version": "1.0.0",
