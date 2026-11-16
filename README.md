@@ -36,6 +36,7 @@ It reads the board file directly, so there is no BOM export, plugin or position 
 - **Hands-free stepping.** Space, Return, arrow keys and Page Up/Down all work, so a foot pedal or presenter clicker does too.
 - **Voice control (experimental).** Say "next", "back" or "skip". This has had little testing; please report problems.
 - **Progress is saved.** Close the app mid-board and it reopens where you stopped.
+- **KiCad plugin.** A toolbar button in KiCad's PCB editor makes the web guide for the open board. See [KiCad plugin](#kicad-plugin).
 - **Web guide export.** Save the whole guide as one HTML file and send it to anyone. It opens in any browser on any device, with no app and no KiCad. See [Sharing a guide](#sharing-a-guide).
 
 ## Screenshots
@@ -92,6 +93,18 @@ With KiCad 8 or later installed, the page shows the board in 3D. The tool looks 
 The tool never writes into your KiCad project; exports are cached in `~/.cache/pcb-assembly-guide`.
 
 It runs on macOS too, and produces the same page as the app's **Export Web Guide**. Automated tests check that the two agree.
+
+## KiCad plugin
+
+The same guide is one click away inside KiCad. The plugin adds an **Assembly Guide** button to the PCB editor's toolbar; it asks for the soldering order and where to save the page, then opens the guide in your browser. It works on macOS, Linux and Windows.
+
+To install it:
+
+1. Build the package: `python3 kicad-plugin/package.py` writes `build/pcb-assembly-guide-kicad-plugin-<version>.zip`. It needs only Python.
+2. In KiCad's main window open **Plugin and Content Manager**, choose **Install from File…** and pick the zip.
+3. Open a board in the PCB editor. The button is on the top toolbar, and under **Tools > External Plugins**.
+
+The guide is made from the board file as last saved, and the page is the only file the plugin writes. The plugin uses KiCad's older Python plugin interface, which KiCad 10 still supports; it has been tried with KiCad 10 on macOS only so far.
 
 ## Using it
 
@@ -168,13 +181,14 @@ The binary can render a step without opening a window, which is useful for check
 - Voice control is experimental.
 - The Mac app is developed and tested on Apple Silicon with KiCad 10 only.
 - On Linux and Windows the guide runs in the browser; there is no native window. Notes, batches of boards, drag-to-reorder and voice control are Mac-only.
+- The KiCad plugin makes the web guide; it does not embed the Mac app's window in KiCad. KiCad plans to retire the plugin interface it uses, and the plugin will need porting to the newer one when that happens.
 - The Flatpak and snap KiCad packages are detected but have had little testing.
 
 ## Contributing
 
 Issues and pull requests are welcome. If a board loads wrongly, a small `.kicad_pcb` that reproduces it helps most.
 
-The board parsing, polarity and ordering logic exists twice: in Swift for the Mac app and in `cli/pcb_assembly_guide.py` for other systems. A change to one needs the same change in the other; the build checks that both write the same guide for `tests/fixtures/sample.kicad_pcb`. Run the tests with `python3 -m unittest discover -s tests`.
+The board parsing, polarity and ordering logic exists twice: in Swift for the Mac app and in `cli/pcb_assembly_guide.py` for other systems. A change to one needs the same change in the other; the build checks that both write the same guide for `tests/fixtures/sample.kicad_pcb`. Run the tests with `python3 -m unittest discover -s tests`. The KiCad plugin (`kicad-plugin/`) is a thin dialog around the same Python file, which `package.py` copies into the plugin archive.
 
 Note for contributors building without Xcode: the Command Line Tools do not ship the SwiftUI macro plugin, so `@State` does not compile. View state lives in `AppModel` as `@Published` properties for that reason.
 

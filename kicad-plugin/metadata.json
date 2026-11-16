@@ -1,0 +1,28 @@
+{
+  "$schema": "https://go.kicad.org/pcm/schemas/v1",
+  "name": "PCB Assembly Guide",
+  "description": "Step-by-step hand-assembly guide for your board, as one web page with a 3D view.",
+  "description_full": "Adds a toolbar button to the PCB editor that writes a hand-assembly guide for the open board as a single HTML file.\n\nThe page shows the board in 3D with KiCad's own models and walks through it one part at a time: the next part is ringed, with its value and package in large type, a red dot at the cathode, positive pad or pin 1, and a note on how to find that mark on the part. It opens on a kit list with the quantity of every value.\n\nThe file works offline in any browser on a PC, tablet or phone, so it can be sent to whoever is building the board. Nothing else needs to be installed; the 3D view needs KiCad 8 or later.",
+  "identifier": "com.github.vpkrishnakumar.pcb-assembly-guide",
+  "type": "plugin",
+  "author": {
+    "name": "vpkrishnakumar",
+    "contact": {
+      "web": "https://github.com/vpkrishnakumar"
+    }
+  },
+  "license": "MIT",
+  "resources": {
+    "homepage": "https://github.com/vpkrishnakumar/pcb-assembly-guide",
+    "issues": "https://github.com/vpkrishnakumar/pcb-assembly-guide/issues"
+  },
+  "tags": ["assembly", "soldering", "bom", "3d", "fabrication"],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "status": "testing",
+      "kicad_version": "8.0",
+      "runtime": "swig"
+    }
+  ]
+}

@@ -701,6 +701,11 @@ def marking_hint(c):
 # KiCad: finding it, borrowing library models, exporting the 3D board
 
 
+def _hidden():
+    """Extra subprocess arguments that stop Windows flashing a console window when run from a GUI."""
+    return {"creationflags": 0x08000000} if os.name == "nt" else {}
+
+
 def locate_kicad_cli():
     """The command (as an argument list) that runs kicad-cli, or None."""
     override = os.environ.get("KICAD_CLI")
@@ -730,7 +735,7 @@ def locate_kicad_cli():
     if shutil.which("flatpak"):
         try:
             probe = subprocess.run(["flatpak", "info", "org.kicad.KiCad"], stdout=subprocess.DEVNULL,
-                                   stderr=subprocess.DEVNULL, timeout=20)
+                                   stderr=subprocess.DEVNULL, timeout=20, **_hidden())
             if probe.returncode == 0:
                 return ["flatpak", "run", "--command=kicad-cli", "org.kicad.KiCad"]
         except (OSError, subprocess.SubprocessError):
@@ -865,7 +870,7 @@ def export_glb(cli, board, variant, source):
             if temp.exists():
                 temp.unlink()
             run = subprocess.run(command + ["pcb", "export", "glb"] + flags + ["-f", "-o", str(temp), str(source_file)],
-                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, **_hidden())
             log = run.stdout.decode("utf-8", "replace")
             if temp.exists() and temp.stat().st_size > 0:
                 os.replace(str(temp), str(output))
@@ -876,15 +881,17 @@ def export_glb(cli, board, variant, source):
     raise RuntimeError("kicad-cli could not export the 3D model.\n" + log[-400:])
 
 
-def load_board(board, fill_models=True, use_kicad=True, say=print):
-    """Returns (components, path of the exported 3D file or None, number of borrowed models, warning or None)."""
+def load_board(board, fill_models=True, use_kicad=True, say=print, cli=None):
+    """Returns (components, path of the exported 3D file or None, number of borrowed models, warning or None).
+
+    cli is the kicad-cli command to use, as an argument list; by default it is searched for."""
     data = board.read_bytes()
     components = read_components(data)
     if not components:
         raise RuntimeError("No components with pads were found in %s." % board.name)
     if not use_kicad:
         return components, None, 0, "Showing simplified shapes only (3D export was turned off)."
-    cli = locate_kicad_cli()
+    cli = cli or locate_kicad_cli()
     if cli is None:
         return components, None, 0, ("Showing simplified shapes only: KiCad's kicad-cli was not found. "
                                      "Install KiCad, or set KICAD_CLI to the path of kicad-cli.")

@@ -45,6 +45,18 @@ jobs:
       - name: Write a guide without KiCad
         run: python cli/pcb_assembly_guide.py tests/fixtures/sample.kicad_pcb -o guide.html --no-open
 
+  kicad-plugin:
+    name: KiCad plugin package
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the package
+        run: python3 kicad-plugin/package.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kicad-plugin
+          path: build/*.zip
+
   linux-kicad:
     name: Linux with KiCad 10 (3D export)
     runs-on: ubuntu-24.04
@@ -62,6 +74,12 @@ jobs:
           kicad-cli version
           python3 cli/pcb_assembly_guide.py tests/fixtures/sample.kicad_pcb -o guide.html --no-open
           python3 tests/compare_guides.py --require-3d guide.html
+      - name: Load the plugin with KiCad's Python
+        run: |
+          python3 kicad-plugin/package.py
+          mkdir -p plugins && unzip -q build/*.zip -d unpacked && mv unpacked/plugins plugins/pcb_assembly_guide
+          python3 tests/load_plugin.py plugins pcb_assembly_guide tests/fixtures/sample.kicad_pcb plugin.html
+          python3 tests/compare_guides.py guide.html plugin.html
       - uses: actions/upload-artifact@v4
         with:
           name: sample-guide-linux
