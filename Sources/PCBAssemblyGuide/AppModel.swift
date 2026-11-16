@@ -55,6 +55,17 @@ struct KitRow: Identifiable {
     let sizeLabel: String?
     let footprint: String
     let refs: [String]
+
+    /// One line per distinct value and footprint, grouped by kind of part.
+    static func rows(for components: [Component]) -> [KitRow] {
+        Dictionary(grouping: components) { $0.value + "|" + $0.footprint }.map { key, members in
+            KitRow(id: key, kind: members[0].kindName, value: members[0].value, sizeLabel: members[0].sizeLabel,
+                   footprint: members[0].footprint,
+                   refs: members.map(\.ref).sorted { $0.compare($1, options: .numeric) == .orderedAscending })
+        }.sorted {
+            $0.kind != $1.kind ? $0.kind < $1.kind : $0.value.compare($1.value, options: .numeric) == .orderedAscending
+        }
+    }
 }
 
 @MainActor
@@ -106,6 +117,7 @@ final class AppModel: ObservableObject {
     private var byRef: [String: Component] = [:]
     private var components: [Component] = []
     private var boardURL: URL?
+    private var loadedBoard: LoadedBoard?
     private var benchWindow: NSWindow?
 
     init() {
@@ -196,6 +208,7 @@ final class AppModel: ObservableObject {
 
     private func install(_ board: LoadedBoard) {
         scene.install(board)
+        loadedBoard = board
         boardURL = board.url
         boardName = board.url.deletingPathExtension().lastPathComponent
         components = board.components
@@ -397,13 +410,25 @@ final class AppModel: ObservableObject {
     // MARK: Kit
 
     private func buildKit() {
-        let buckets = Dictionary(grouping: components) { $0.value + "|" + $0.footprint }
-        kitRows = buckets.map { key, members in
-            KitRow(id: key, kind: members[0].kindName, value: members[0].value, sizeLabel: members[0].sizeLabel,
-                   footprint: members[0].footprint,
-                   refs: members.map(\.ref).sorted { $0.compare($1, options: .numeric) == .orderedAscending })
-        }.sorted {
-            $0.kind != $1.kind ? $0.kind < $1.kind : $0.value.compare($1.value, options: .numeric) == .orderedAscending
+        kitRows = KitRow.rows(for: components)
+    }
+
+    /// Writes the guide for this board as a single web page that opens in any browser.
+    func exportWebGuide() {
+        guard isReady, let board = loadedBoard else { return }
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = boardName + " Assembly Guide.html"
+        panel.allowedContentTypes = [.html]
+        panel.message = "The page holds the whole guide and works on any device, without this app or KiCad."
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try WebExport.write(board: board, plan: plan, to: url)
+            NSWorkspace.shared.activateFileViewerSelecting([url])
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "The web guide could not be saved."
+            alert.informativeText = error.localizedDescription
+            alert.runModal()
         }
     }
 

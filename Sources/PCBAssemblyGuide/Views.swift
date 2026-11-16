@@ -22,6 +22,10 @@ struct GuideApp: App {
                     }
                 }
                 .disabled(model.recents.isEmpty)
+                Divider()
+                Button("Export Web Guide…") { model.exportWebGuide() }
+                    .keyboardShortcut("e", modifiers: [.command, .shift])
+                    .disabled(!model.isReady)
             }
             CommandGroup(before: .toolbar) {
                 ForEach(Array(AppModel.Tab.allCases.enumerated()), id: \.element) { index, tab in

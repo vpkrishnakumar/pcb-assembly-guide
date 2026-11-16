@@ -36,6 +36,7 @@ It reads the board file directly, so there is no BOM export, plugin or position 
 - **Hands-free stepping.** Space, Return, arrow keys and Page Up/Down all work, so a foot pedal or presenter clicker does too.
 - **Voice control (experimental).** Say "next", "back" or "skip". This has had little testing; please report problems.
 - **Progress is saved.** Close the app mid-board and it reopens where you stopped.
+- **Web guide export.** Save the whole guide as one HTML file and send it to anyone. It opens in any browser on any device, with no app and no KiCad. See [Sharing a guide](#sharing-a-guide).
 
 ## Screenshots
 
@@ -83,9 +84,28 @@ The app is ad-hoc signed. If you copy a build to another Mac, right-click it and
 | ⌘1 to ⌘4 | Assemble, Kit, Order, Notes |
 | ⇧⌘F | Flat view |
 | ⌘B | Bench display |
+| ⇧⌘E | Export web guide |
 | ⌘O | Open a board |
 
 Drag on the 3D view to orbit, scroll to zoom, and click a part to jump to it.
+
+### Sharing a guide
+
+**File > Export Web Guide…** (⇧⌘E) writes a single `.html` file containing the 3D board, the step-by-step plan, the kit list and the polarity notes. Email it, put it on a shared drive or host it anywhere. The person building the board opens it in a browser on a Mac, Windows or Linux PC, a tablet or a phone. Nothing is installed and the page works offline.
+
+| Desktop browser | Phone |
+|---|---|
+| ![The exported web guide in a desktop browser](docs/screenshots/web-guide.png) | ![The exported web guide at phone width](docs/screenshots/web-guide-phone.png) |
+
+The page has the Assemble and Kit views, search, click-to-jump, flat view and the same keys as the app. Progress is saved in that browser. Notes, batches of several boards, custom ordering and voice control are only in the Mac app.
+
+The file is usually 5 to 15 MB, because the board's 3D model is inside it. The 3D view uses [three.js](https://threejs.org) (MIT), which is bundled into the page.
+
+From the command line:
+
+```sh
+.build/release/PCBAssemblyGuide --export-web board.kicad_pcb guide.html
+```
 
 ### What gets assembled
 
@@ -103,7 +123,7 @@ If a two-pad resistor, capacitor, inductor, ferrite, diode or LED has no 3D mode
 4. **Render.** `GLB.swift` loads the export into SceneKit, and `BoardScene.swift` handles visibility, the highlight ring, the polarity marker and the camera.
 5. **Plan.** `AssemblyPlan.swift` groups and orders the parts.
 
-The interface is SwiftUI (`Views.swift`) driven by one observable model (`AppModel.swift`). There are no third-party dependencies.
+The interface is SwiftUI (`Views.swift`) driven by one observable model (`AppModel.swift`). The app itself has no third-party dependencies. The exported web guide (`WebExport.swift`, `Resources/web/guide.html`) inlines three.js.
 
 ### Command-line mode
 

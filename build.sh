@@ -10,6 +10,7 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/"
 cp Info.plist "$APP/Contents/"
+cp -R Resources/web "$APP/Contents/Resources/web"
 
 # The app draws its own icon; turn that into the sizes macOS wants.
 ICONSET=build/AppIcon.iconset

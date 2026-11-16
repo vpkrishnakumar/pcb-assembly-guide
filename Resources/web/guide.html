@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>__TITLE__ · Assembly Guide</title>
+<style>
+:root {
+  --bg: #1e1e20; --panel: #2a2a2d; --panel2: #333337; --line: #444449; --text: #f2f2f4; --dim: #a0a0a8;
+  --accent: #3b7cf5; --accent-soft: rgba(59,124,245,.18); --badge: #2c3e66; --ok: #4cd964; --warn: #ff5a52;
+  --warn-soft: rgba(255,90,82,.16); --cyan: #2fd3f5; --cyan-soft: rgba(47,211,245,.14); --now: rgba(255,150,40,.28);
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f4f4f6; --panel: #ffffff; --panel2: #ececf0; --line: #d4d4da; --text: #1b1b1f; --dim: #66666e;
+    --accent-soft: rgba(59,124,245,.12); --badge: #dbe6ff; --ok: #1f9d3a; --warn: #d92d23;
+    --warn-soft: rgba(217,45,35,.1); --cyan: #0a8fb0; --cyan-soft: rgba(10,143,176,.1); --now: rgba(255,150,40,.3);
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--text); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  display: flex; flex-direction: column; overflow: hidden; }
+button { font: inherit; color: var(--text); background: var(--panel2); border: 1px solid var(--line); border-radius: 7px;
+  padding: 6px 12px; cursor: pointer; }
+button:hover { filter: brightness(1.12); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+button.on { background: var(--accent-soft); border-color: var(--accent); }
+header { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--panel);
+  border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+header h1 { font-size: 16px; margin: 0 8px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40vw; }
+.tabs { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.tabs button { border: 0; border-radius: 0; background: transparent; padding: 6px 16px; }
+.tabs button.on { background: var(--accent); color: #fff; }
+.tools { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+#assemble { flex: 1; min-height: 0; display: grid; grid-template-columns: 270px 1fr 330px; }
+#list { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+#search { margin: 10px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2);
+  color: var(--text); font: inherit; }
+#steps { overflow-y: auto; flex: 1; padding-bottom: 12px; }
+.group { padding: 8px 12px 2px; display: flex; justify-content: space-between; gap: 8px; }
+.group b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.group small, .gsub { color: var(--dim); font-size: 12px; }
+.gsub { padding: 0 12px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.step { padding: 6px 12px 6px 14px; cursor: pointer; display: flex; gap: 9px; align-items: center; }
+.step:hover { background: var(--panel2); }
+.step.now { background: var(--now); }
+.dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--dim); flex: none; }
+.step.done .dot { background: var(--ok); border-color: var(--ok); }
+.step.now .dot { background: #ff9628; border-color: #ff9628; }
+#view { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: #1c1c1c; }
+#stage { flex: 1; min-height: 0; position: relative; }
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+#msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #bbb; padding: 20px;
+  text-align: center; pointer-events: none; }
+#bar { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: var(--panel); border-top: 1px solid var(--line); }
+#bar progress { flex: 1; height: 8px; min-width: 40px; accent-color: var(--accent); }
+#count { color: var(--dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+#info { background: var(--panel); border-left: 1px solid var(--line); padding: 14px 16px; overflow-y: auto; }
+.ref { display: flex; justify-content: space-between; font-size: 22px; font-weight: 600; }
+.ref span { color: var(--dim); font-size: 14px; font-weight: 400; align-self: center; }
+.value { font-size: 44px; font-weight: 800; line-height: 1.05; margin: 4px 0 10px; overflow-wrap: anywhere; }
+.size { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.badge { background: var(--badge); border-radius: 8px; padding: 2px 12px; font-size: 34px; font-weight: 700; }
+.kit .badge { font-size: 17px; padding: 1px 8px; border-radius: 6px; }
+.fp { color: var(--dim); font-size: 12px; margin: 8px 0 10px; overflow-wrap: anywhere; }
+.side { padding: 10px 0; border-top: 1px solid var(--line); }
+.box { border-radius: 9px; padding: 10px 12px; margin: 8px 0; }
+.take { background: var(--accent-soft); display: flex; align-items: center; gap: 14px; }
+.take .n { font-size: 38px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.take small { color: var(--dim); display: block; font-size: 14px; }
+.pol { background: var(--warn-soft); border: 1px solid var(--warn); }
+.jump { background: var(--cyan-soft); border: 1px solid var(--cyan); }
+.check { background: var(--accent-soft); border: 1px solid var(--accent); }
+.box b { display: block; margin-bottom: 3px; }
+.rev { color: var(--ok); margin: 8px 0; }
+.nets { margin: 10px 0; }
+.nets div { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; color: var(--dim); }
+.nets div i { display: inline-block; min-width: 2.2em; text-align: right; margin-right: 8px; font-style: normal; color: var(--text); }
+.hint { color: var(--dim); margin: 10px 0; }
+.foot { color: var(--dim); font-size: 12px; border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px; }
+.foot a { color: inherit; }
+#kit { flex: 1; overflow-y: auto; padding: 18px 22px 40px; display: none; }
+#kit h2 { margin: 0; font-size: 28px; }
+#kit .sub { color: var(--dim); margin-bottom: 14px; }
+#kit h3 { font-size: 14px; color: var(--dim); border-bottom: 1px solid var(--line); padding-bottom: 6px; margin: 22px 0 4px; }
+.kit { display: flex; align-items: center; gap: 16px; padding: 9px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+.kit input { width: 20px; height: 20px; flex: none; }
+.kit .n { font-size: 34px; font-weight: 800; min-width: 92px; font-variant-numeric: tabular-nums; }
+.kit .v { font-size: 19px; font-weight: 600; }
+.kit small { color: var(--dim); display: block; overflow-wrap: anywhere; }
+.kit.got { opacity: .45; }
+.kithead { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+body[data-tab=kit] #assemble { display: none; }
+body[data-tab=kit] #kit { display: block; }
+body[data-tab=kit] .tools .v3d { display: none; }
+#tab-steps { display: none; }
+@media (max-width: 900px) {
+  body { overflow: hidden; }
+  #tab-steps { display: block; }
+  #assemble { display: flex; flex-direction: column; }
+  #list { display: none; border: 0; flex: 1; }
+  #view { flex: none; height: 46vh; }
+  #info { flex: 1; border-left: 0; border-top: 1px solid var(--line); }
+  body[data-tab=steps] #list { display: flex; }
+  body[data-tab=steps] #view, body[data-tab=steps] #info { display: none; }
+  .value { font-size: 36px; }
+  header { gap: 8px; }
+  header h1 { max-width: 100%; flex: 1 1 100%; }
+  .tabs button { padding: 6px 12px; }
+  .tools { margin-left: 0; }
+  .tools button { padding: 6px 9px; font-size: 14px; }
+  #bar { gap: 8px; padding: 8px; }
+  #bar progress { display: none; }
+  #count { flex: 1; text-align: center; }
+  #bar button { padding: 9px 12px; }
+}
+</style>
+</head>
+<body data-tab="assemble">
+<header>
+  <h1 id="title"></h1>
+  <div class="tabs">
+    <button data-tab="assemble">Assemble</button>
+    <button data-tab="steps" id="tab-steps">Steps</button>
+    <button data-tab="kit">Kit</button>
+  </div>
+  <div class="tools">
+    <button id="flat" class="v3d" title="Flat top-down view, like the silkscreen drawing">Flat</button>
+    <button id="fit" class="v3d" title="Zoom out to the whole board">Whole board</button>
+    <button id="all" class="v3d" title="Preview the fully assembled board">Show all</button>
+    <button id="reset" title="Clear progress on this board">Reset</button>
+  </div>
+</header>
+
+<div id="assemble">
+  <aside id="list">
+    <input id="search" type="search" placeholder="Find R12, 10k, 0402…" autocomplete="off">
+    <div id="steps"></div>
+  </aside>
+  <section id="view">
+    <div id="stage"><canvas id="c"></canvas><div id="msg">Loading the board…</div></div>
+    <div id="bar">
+      <button id="back">‹ Back</button>
+      <progress id="prog" value="0" max="1"></progress>
+      <span id="count"></span>
+      <button id="skip">Skip ›</button>
+      <button id="next" class="primary">✓ Placed · Next</button>
+    </div>
+  </section>
+  <aside id="info"></aside>
+</div>
+<div id="kit"></div>
+
+<script type="application/json" id="data">__DATA__</script>
+<script type="application/octet-stream" id="glb">__GLB__</script>
+<script>/*__LIBS__*/</script>
+<script>
+"use strict";
+const D = JSON.parse(document.getElementById("data").textContent);
+const P = D.parts, STEPS = D.steps, GOS = D.gos, GROUPS = D.groups;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// ---- Saved progress (this browser only) ----
+const KEY = "pcb-assembly-guide|" + D.name + "|" + STEPS.length;
+let placed = new Set(), kitted = new Set(), idx = 0, showAll = false, flat = false, checkpoint = null, query = "";
+try {
+  const saved = JSON.parse(localStorage.getItem(KEY) || "null");
+  if (saved) {
+    placed = new Set((saved.placed || []).filter(r => P[r]));
+    kitted = new Set(saved.kitted || []);
+  }
+} catch (e) {}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify({ placed: [...placed], kitted: [...kitted] })); } catch (e) {}
+}
+function firstUnplaced(from) {
+  const n = STEPS.length;
+  for (let k = 0; k < n; k++) { const i = (from + k) % n; if (!placed.has(STEPS[i])) return i; }
+  return n;
+}
+idx = firstUnplaced(0);
+const current = () => (idx < STEPS.length ? STEPS[idx] : null);
+
+// ---- Stepping ----
+function advance() {
+  const before = idx < STEPS.length ? GROUPS[GOS[idx]].stage : null;
+  idx = STEPS.length ? firstUnplaced((idx + 1) % STEPS.length) : 0;
+  checkpoint = null;
+  if (before !== null && idx < STEPS.length) {
+    const after = GROUPS[GOS[idx]].stage;
+    const done = GROUPS.filter(g => g.stage === before).every(g => g.refs.every(r => placed.has(r)));
+    if (after !== before && done) {
+      checkpoint = before + " is finished. Inspect the joints and check for solder bridges before starting " + after + ".";
+    }
+  }
+  changed(true);
+}
+function markPlaced() { if (current()) { placed.add(current()); advance(); } }
+function skip() { if (current()) advance(); }
+function back() {
+  if (idx <= 0) return;
+  idx -= 1; placed.delete(STEPS[idx]); checkpoint = null; changed(true);
+}
+function jump(ref) {
+  const i = STEPS.indexOf(ref);
+  if (i < 0) return;
+  idx = i; checkpoint = null; setTab("assemble"); changed(true);
+}
+function changed(focus) { save(); renderList(); renderInfo(); renderBar(); apply3D(focus); }
+
+// ---- Panels ----
+function renderList() {
+  const q = query.trim().toLowerCase();
+  let html = "";
+  GROUPS.forEach(g => {
+    const hay = (g.value + " " + g.fp + " " + (g.size || "")).toLowerCase();
+    const refs = q ? g.refs.filter(r => hay.includes(q) || r.toLowerCase().includes(q)) : g.refs;
+    if (!refs.length) return;
+    const done = g.refs.filter(r => placed.has(r)).length;
+    html += `<div class="group"><b>${esc(g.value)}</b><small>${done}/${g.refs.length}</small></div>`
+      + `<div class="gsub">${esc(g.stage)} · ${esc(g.size || g.fp)}</div>`;
+    refs.forEach(r => {
+      const cls = r === current() ? "now" : placed.has(r) ? "done" : "";
+      html += `<div class="step ${cls}" data-ref="${esc(r)}"><span class="dot"></span>${esc(r)}</div>`;
+    });
+  });
+  $("steps").innerHTML = html || `<div class="gsub" style="padding:12px">Nothing matches.</div>`;
+  const now = $("steps").querySelector(".now");
+  if (now && !q) now.scrollIntoView({ block: "nearest" });
+}
+function renderInfo() {
+  const ref = current(), el = $("info");
+  const foot = `<div class="foot">${esc(D.summary)} Progress is saved in this browser.<br>Made with `
+    + `<a href="https://github.com/vpkrishnakumar/pcb-assembly-guide" target="_blank" rel="noopener">PCB Assembly Guide</a>.</div>`;
+  if (!ref) {
+    el.innerHTML = `<div class="value" style="font-size:32px">Board complete</div>`
+      + `<p>All ${STEPS.length} parts are placed. Inspect every joint, check for solder bridges, and clean off the flux.</p>` + foot;
+    return;
+  }
+  const c = P[ref], g = GROUPS[GOS[idx]];
+  const left = g.refs.filter(r => !placed.has(r)).length;
+  let h = `<div class="ref">${esc(ref)}<span>${esc(c.kind)}</span></div><div class="value">${esc(c.value)}</div><div class="size">`;
+  if (c.size) h += `<span class="badge">${esc(c.size)}</span>`;
+  h += `<span>${esc(c.dims)}${c.pads > 2 ? `<br><small style="color:var(--dim)">${c.pads} pins</small>` : ""}</span></div>`;
+  h += `<div class="fp">${esc(c.fp)}</div>`;
+  h += `<div class="side">${c.bottom ? "Bottom side" : "Top side"} · ${c.tht ? "through-hole" : "surface-mount"}</div>`;
+  if (checkpoint) h += `<div class="box check"><b>Checkpoint</b>${esc(checkpoint)}</div>`;
+  h += `<div class="box take"><span class="n">×${g.refs.length}</span><span><b>Take ${g.refs.length} of these</b>`
+    + `<small>${left} still to place${c.qty > g.refs.length ? ` · ${c.qty} on the whole board` : ""}</small></span></div>`;
+  if (c.jumper) h += `<div class="box jump"><b>${esc(c.jumper.title)}</b>${esc(c.jumper.detail)}</div>`;
+  if (c.pol) h += `<div class="box pol"><b>⚠ ${esc(c.pol.title)}</b>${esc(c.pol.detail)}</div>`;
+  else if (c.rev) h += `<div class="rev">⇄ ${esc(c.rev)}</div>`;
+  if (c.nets && c.nets.length) {
+    const shown = c.nets.length <= 8 ? c.nets : c.nets.slice(0, 1);
+    h += `<div class="nets"><b>Connections</b>` + shown.map(n => `<div><i>${esc(n[0])}</i>${esc(n[1])}</div>`).join("")
+      + (shown.length < c.nets.length ? `<small style="color:var(--dim)">${c.nets.length - shown.length} more pins</small>` : "") + `</div>`;
+  }
+  if (c.mark) h += `<div class="hint">${esc(c.mark)}</div>`;
+  if (c.ds) h += `<p><a href="${esc(c.ds)}" target="_blank" rel="noopener" style="color:var(--accent)">Datasheet</a></p>`;
+  el.innerHTML = h + foot;
+  el.scrollTop = 0;
+}
+function renderBar() {
+  $("prog").max = Math.max(STEPS.length, 1);
+  $("prog").value = placed.size;
+  $("count").textContent = placed.size + " / " + STEPS.length;
+  $("back").disabled = idx <= 0;
+  $("skip").disabled = $("next").disabled = !current();
+}
+function renderKit() {
+  let html = `<div class="kithead"><div><h2>Take These Parts</h2><div class="sub">${kitted.size} of ${D.kit.length} lines pulled · `
+    + `${STEPS.length} parts per board</div></div><button class="primary" id="start">→ Start Assembling</button></div>`;
+  let kind = null;
+  D.kit.forEach(row => {
+    if (row.kind !== kind) { kind = row.kind; html += `<h3>${esc(kind)}</h3>`; }
+    const got = kitted.has(row.id);
+    html += `<label class="kit ${got ? "got" : ""}"><input type="checkbox" data-id="${esc(row.id)}" ${got ? "checked" : ""}>`
+      + `<span class="n">×${row.refs.length}</span><span><span class="v">${esc(row.value)}</span> `
+      + (row.size ? `<span class="badge">${esc(row.size)}</span>` : "")
+      + `<small>${row.size ? "" : esc(row.fp) + " · "}${esc(row.refs.join(" "))}</small></span></label>`;
+  });
+  $("kit").innerHTML = html;
+}
+function setTab(tab) {
+  document.body.dataset.tab = tab;
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  if (tab === "kit") renderKit();
+  resize();
+}
+
+// ---- 3D ----
+let renderer, scene, camera, controls, ready = false;
+const flip = new THREE.Group(), content = new THREE.Group();
+const partNodes = {}, partBox = {}, refOf = new Map(), variants = new Map();
+let center = new THREE.Vector3(0, 0.8, 0), topY = 1.6, bottomY = 0, span = 100, flipped = false, lastShot = null, anim = null;
+let ring, pinDot, pinLabel, labelCanvas, padMarks = [];
+const canvas = $("c");
+
+// Colours are written as sRGB; the renderer works in linear light.
+const srgb = hex => new THREE.Color(hex).convertSRGBToLinear();
+function overlay(color, onTop) {
+  return new THREE.MeshBasicMaterial({ color: srgb(color), depthTest: !onTop, transparent: onTop, toneMapped: false });
+}
+function init3D() {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x1c1c1c);
+  camera = new THREE.PerspectiveCamera(35, 1, 1, 5000);
+  controls = new THREE.OrbitControls(camera, canvas);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.12;
+
+  // A soft sky-to-floor gradient so metal pads and leads have something to reflect.
+  const sky = new THREE.SphereGeometry(50, 32, 16), colours = [], pos = sky.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const t = (pos.getY(i) / 50 + 1) / 2;
+    const v = (t > 0.5 ? 0.75 + (t - 0.5) * 0.5 : 0.3 + t * 0.9) * 0.62;
+    colours.push(v, v, v);
+  }
+  sky.setAttribute("color", new THREE.Float32BufferAttribute(colours, 3));
+  const envScene = new THREE.Scene();
+  envScene.add(new THREE.Mesh(sky, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide })));
+  scene.environment = new THREE.PMREMGenerator(renderer).fromScene(envScene).texture;
+  const key = new THREE.DirectionalLight(0xffffff, 0.55); key.position.set(0.4, 1, 0.6);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.18); fill.position.set(-0.6, 0.7, -0.5);
+  scene.add(key, fill, flip);
+  flip.add(content);
+
+  ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.1, 12, 96), overlay(0x40ff73, true));
+  ring.rotation.x = Math.PI / 2; ring.renderOrder = 100;
+  pinDot = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), overlay(0xff2626, false));
+  labelCanvas = document.createElement("canvas"); labelCanvas.width = labelCanvas.height = 128;
+  const labelTexture = new THREE.CanvasTexture(labelCanvas);
+  labelTexture.encoding = THREE.sRGBEncoding;
+  pinLabel = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTexture, depthTest: false, toneMapped: false }));
+  pinLabel.renderOrder = 101;
+  for (let i = 0; i < 2; i++) padMarks.push(new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 1), overlay(0x1ad9ff, false)));
+}
+function isPartName(n) { return (n.userData && P[n.userData.name]) ? n.userData.name : (P[n.name] ? n.name : null); }
+
+function build(model) {
+  const box = new THREE.Box3(), tmp = new THREE.Box3();
+  if (model) {
+    model.scale.setScalar(1000);  // glTF is in metres
+    content.add(model);
+    content.updateMatrixWorld(true);
+    (function walk(n) {
+      const ref = isPartName(n);
+      if (ref) { (partNodes[ref] = partNodes[ref] || []).push(n); return; }
+      if (n.isMesh) {
+        n.geometry.computeBoundingBox();
+        box.union(tmp.copy(n.geometry.boundingBox).applyMatrix4(n.matrixWorld));
+      }
+      n.children.forEach(walk);
+    })(model);
+  }
+  if (box.isEmpty()) {
+    Object.values(P).forEach(c => {
+      const r = c.reach + 2;
+      box.expandByPoint(new THREE.Vector3(c.x - r, 0, c.y - r));
+      box.expandByPoint(new THREE.Vector3(c.x + r, 1.6, c.y + r));
+    });
+    if (!model) {
+      const size = box.getSize(new THREE.Vector3());
+      const slab = new THREE.Mesh(new THREE.BoxGeometry(size.x, 1.6, size.z),
+        new THREE.MeshStandardMaterial({ color: srgb(0x0d4d26), roughness: 0.7, metalness: 0 }));
+      slab.position.set((box.min.x + box.max.x) / 2, 0.8, (box.min.z + box.max.z) / 2);
+      content.add(slab);
+    }
+  }
+  topY = box.max.y; bottomY = box.min.y;
+  // KiCad seats models on the copper surface, so prefer where it actually put them.
+  const seat = bottom => {
+    const ys = Object.keys(partNodes).filter(r => !!P[r].bottom === bottom)
+      .map(r => partNodes[r][0].getWorldPosition(new THREE.Vector3()).y).sort((a, b) => a - b);
+    return ys.length ? ys[Math.floor(ys.length / 2)] : null;
+  };
+  const st = seat(false), sb = seat(true);
+  if (st !== null) topY = st;
+  if (sb !== null) bottomY = sb;
+
+  const tints = { R: 0x1a1a1c, RN: 0x1a1a1c, C: 0xb8946b, L: 0x66666b, FB: 0x66666b, D: 0xbf4d33, LED: 0xbf4d33,
+    U: 0x212126, IC: 0x212126, Q: 0x212126, J: 0xd9d1b8, P: 0xd9d1b8, CN: 0xd9d1b8 };
+  Object.keys(P).forEach(ref => {
+    if (partNodes[ref]) return;
+    const c = P[ref], w = Math.max(c.w, 0.3), d = Math.max(c.d, 0.3);
+    const h = c.tht ? Math.min(Math.max(Math.min(w, d), 2), 8) : Math.min(Math.max(Math.min(w, d) * 0.5, 0.3), 2);
+    const node = new THREE.Mesh(new THREE.BoxGeometry(w, h, d),
+      new THREE.MeshStandardMaterial({ color: srgb(tints[c.prefix] || 0x4d5c80), roughness: 0.7, metalness: 0 }));
+    node.position.set(c.x, c.bottom ? bottomY - h / 2 : topY + h / 2, c.y);
+    node.rotation.y = c.rot * Math.PI / 180;
+    content.add(node);
+    partNodes[ref] = [node];
+  });
+  content.updateMatrixWorld(true);
+  Object.keys(partNodes).forEach(ref => {
+    const b = new THREE.Box3();
+    partNodes[ref].forEach(n => { refOf.set(n, ref); b.expandByObject(n); });
+    partBox[ref] = b;
+  });
+
+  center.set((box.min.x + box.max.x) / 2, (topY + bottomY) / 2, (box.min.z + box.max.z) / 2);
+  span = Math.max(box.max.x - box.min.x, box.max.z - box.min.z, 10);
+  content.position.copy(center).negate();
+  [ring, pinDot, pinLabel, ...padMarks].forEach(n => { n.visible = false; content.add(n); });
+  ready = true;
+  $("msg").style.display = "none";
+  resize();
+  fitBoard(false, false);
+  apply3D(true, false);
+  requestAnimationFrame(frame);
+}
+
+// Parts share materials, so each look (solid, faint, glowing) is a cached copy of the original.
+function look(material, mode) {
+  if (mode === "solid") return material;
+  let set = variants.get(material);
+  if (!set) variants.set(material, set = {});
+  if (!set[mode]) {
+    const m = material.clone();
+    if (mode === "ghost") { m.transparent = true; m.opacity = 0.3; m.depthWrite = false; }
+    else if (m.emissive) { m.emissive = srgb(0xff8c0d); m.emissiveIntensity = 0.5; m.emissiveMap = null; }
+    set[mode] = m;
+  }
+  return set[mode];
+}
+function setLook(node, mode) {
+  node.traverse(o => {
+    if (!o.isMesh) return;
+    if (!o.userData.base) o.userData.base = o.material;
+    o.material = look(o.userData.base, mode);
+  });
+}
+function apply3D(focusCamera, animate) {
+  if (!ready) return;
+  const ref = current(), c = ref ? P[ref] : null;
+  const upcoming = new Set(c ? GROUPS[GOS[idx]].refs.filter(r => !placed.has(r)) : []);
+  const everything = showAll || !c;
+  Object.keys(partNodes).forEach(r => {
+    const solid = everything || placed.has(r) || r === ref;
+    partNodes[r].forEach(n => {
+      n.visible = solid || upcoming.has(r);
+      setLook(n, r === ref ? "glow" : solid ? "solid" : "ghost");
+    });
+  });
+  [ring, pinDot, pinLabel, ...padMarks].forEach(n => { n.visible = false; });
+  if (c) {
+    const side = c.bottom ? -1 : 1, surface = c.bottom ? bottomY : topY;
+    const radius = c.reach * 1.2 + 0.5;
+    ring.geometry.dispose();
+    ring.geometry = new THREE.TorusGeometry(radius, Math.max(0.07, radius * 0.035), 12, 96);
+    ring.position.set(c.x, surface + side * 0.1, c.y);
+    ring.visible = true;
+    if (c.pol) {
+      const r = Math.min(Math.max(c.reach * 0.12, 0.15), 0.5), b = partBox[ref];
+      const partTop = c.bottom ? b.min.y : b.max.y;
+      const dot = new THREE.Vector3(c.pol.x, partTop + side * (r + 0.05), c.pol.y);
+      pinDot.scale.setScalar(r); pinDot.position.copy(dot); pinDot.visible = true;
+      const g = labelCanvas.getContext("2d");
+      g.clearRect(0, 0, 128, 128);
+      g.font = "900 110px system-ui, -apple-system, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+      g.fillStyle = "#ff2626"; g.fillText(c.pol.label, 64, 70);
+      pinLabel.material.map.needsUpdate = true;
+      const height = Math.min(Math.max(c.reach * 0.8, 1.5), 3);
+      const out = new THREE.Vector3(c.pol.x - c.x, 0, c.pol.y - c.y);
+      if (out.length() > 0.01) out.normalize(); else out.set(1, 0, 0);
+      pinLabel.scale.setScalar(height * 1.2);
+      pinLabel.position.copy(dot).addScaledVector(out, r + height * 0.8).add(new THREE.Vector3(0, side * height * 0.4, 0));
+      pinLabel.visible = true;
+    }
+    (c.jumper ? c.jumper.pads : []).forEach((pad, i) => {
+      const m = padMarks[i];
+      if (!m) return;
+      m.scale.set((pad.hw + 0.14) * 2, 1, (pad.hh + 0.14) * 2);
+      m.position.set(pad.x, surface + side * 0.05, pad.y);
+      m.rotation.y = c.rot * Math.PI / 180;
+      m.visible = true;
+    });
+  }
+  if (focusCamera) {
+    if (c) focus(c, animate !== false); else fitBoard(flipped, animate !== false);
+  }
+}
+function focus(c, animate) {
+  const local = new THREE.Vector3(c.x, c.bottom ? bottomY : topY, c.y).sub(center);
+  if (c.bottom) local.set(-local.x, -local.y, local.z);
+  moveCamera(local, Math.max(45, c.reach * 9), !!c.bottom, animate);
+}
+function fitBoard(bottom, animate) {
+  // Narrow, tall windows need more distance to keep the whole board in view.
+  const narrow = camera.aspect < 1 ? Math.min(1 / camera.aspect, 2.2) : 1;
+  moveCamera(new THREE.Vector3(), span * 1.9 * narrow, bottom, animate);
+}
+function moveCamera(target, distance, bottom, animate) {
+  lastShot = { target: target.clone(), distance };
+  flipped = bottom;
+  flip.rotation.z = bottom ? Math.PI : 0;
+  const d = distance;
+  const tilt = flat ? 0.0005 : 28 * Math.PI / 180;
+  const to = target.clone().add(new THREE.Vector3(0, d * Math.cos(tilt), d * Math.sin(tilt)));
+  controls.enableRotate = !flat;
+  anim = { start: performance.now(), length: animate ? 450 : 0, p0: camera.position.clone(), p1: to,
+    t0: controls.target.clone(), t1: target.clone() };
+}
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (anim) {
+    // The frame time can be slightly earlier than the moment the move was requested.
+    const k = anim.length ? Math.min(Math.max((performance.now() - anim.start) / anim.length, 0), 1) : 1;
+    const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    camera.position.lerpVectors(anim.p0, anim.p1, e);
+    controls.target.lerpVectors(anim.t0, anim.t1, e);
+    if (k >= 1) anim = null;
+  }
+  controls.update();
+  if (ring.visible) ring.scale.setScalar(1.125 + 0.125 * Math.sin(now / 175));
+  renderer.render(scene, camera);
+}
+function resize() {
+  if (!renderer) return;
+  const w = $("stage").clientWidth, h = $("stage").clientHeight;
+  if (!w || !h) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+
+// Click a part on the board to jump to it.
+let downAt = null;
+canvas.addEventListener("pointerdown", e => { downAt = [e.clientX, e.clientY]; });
+canvas.addEventListener("pointerup", e => {
+  if (!ready || !downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+  const rect = canvas.getBoundingClientRect();
+  const ray = new THREE.Raycaster();
+  ray.setFromCamera(new THREE.Vector2((e.clientX - rect.left) / rect.width * 2 - 1, -(e.clientY - rect.top) / rect.height * 2 + 1), camera);
+  for (const hit of ray.intersectObjects(content.children, true)) {
+    let node = hit.object, ref = null, visible = true;
+    while (node) { if (!node.visible) visible = false; if (!ref && refOf.has(node)) ref = refOf.get(node); node = node.parent; }
+    if (ref && visible) { jump(ref); return; }
+  }
+});
+
+// ---- Wiring ----
+$("title").textContent = D.name;
+document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => setTab(b.dataset.tab)));
+$("next").onclick = markPlaced; $("skip").onclick = skip; $("back").onclick = back;
+$("flat").onclick = () => {
+  flat = !flat; $("flat").classList.toggle("on", flat);
+  if (lastShot) moveCamera(lastShot.target, lastShot.distance, flipped, true);
+};
+$("fit").onclick = () => fitBoard(flipped, true);
+$("all").onclick = () => { showAll = !showAll; $("all").classList.toggle("on", showAll); apply3D(false); };
+$("reset").onclick = () => {
+  if (!confirm("Clear all progress on this board?")) return;
+  placed.clear(); kitted.clear(); idx = 0; checkpoint = null; changed(true);
+  if (document.body.dataset.tab === "kit") renderKit();
+};
+$("search").addEventListener("input", e => { query = e.target.value; renderList(); });
+$("steps").addEventListener("click", e => { const row = e.target.closest(".step"); if (row) jump(row.dataset.ref); });
+$("kit").addEventListener("change", e => {
+  const id = e.target.dataset.id;
+  if (!id) return;
+  if (e.target.checked) kitted.add(id); else kitted.delete(id);
+  save(); renderKit();
+});
+$("kit").addEventListener("click", e => { if (e.target.id === "start") setTab("assemble"); });
+window.addEventListener("keydown", e => {
+  if (e.metaKey || e.ctrlKey || e.altKey || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if (document.body.dataset.tab !== "assemble") return;
+  if ([" ", "Enter", "PageDown"].includes(e.key)) markPlaced();
+  else if (["ArrowLeft", "PageUp"].includes(e.key)) back();
+  else if (e.key === "ArrowRight") skip();
+  else return;
+  e.preventDefault();
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+});
+window.addEventListener("resize", resize);
+
+// A fresh board starts on the kit list, so the right number of each part is on the bench first.
+setTab(placed.size === 0 && kitted.size < D.kit.length ? "kit" : "assemble");
+// A link ending in "#R12" opens the guide at that part.
+let linked = "";
+try { linked = decodeURIComponent(location.hash.slice(1)); } catch (e) {}
+if (STEPS.includes(linked)) { idx = STEPS.indexOf(linked); setTab("assemble"); }
+renderList(); renderInfo(); renderBar();
+try {
+  init3D();
+  const b64 = document.getElementById("glb").textContent.trim();
+  if (b64) {
+    const bin = atob(b64), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    new THREE.GLTFLoader().parse(bytes.buffer, "", gltf => build(gltf.scene), () => build(null));
+  } else {
+    build(null);
+  }
+} catch (error) {
+  $("msg").textContent = "This browser could not start the 3D view. The step list and part details still work.";
+}
+</script>
+</body>
+</html>

@@ -12,6 +12,8 @@ struct LoadedBoard {
     let components: [Component]
     /// KiCad's 3D model of the board, or nil if the export was not possible.
     let model: SCNNode?
+    /// The exported 3D file the model was read from, kept for the web guide.
+    let glb: URL?
     /// How many parts without a model in KiCad were given a standard library model.
     let filledModels: Int
     let warning: String?
@@ -164,6 +166,7 @@ enum BoardLoader {
             ? ModelLibrary.patchedBoard(data, components: components, projectDirectory: url.deletingLastPathComponent()) : nil
 
         var model: SCNNode?
+        var exported: URL?
         var warning: String?
         do {
             let glb = try KiCadCLI.exportGLB(board: url, variant: patch == nil ? "plain" : "filled-1") {
@@ -180,10 +183,11 @@ enum BoardLoader {
                 return copy
             }
             model = try GLBLoader(url: glb).buildScene()
+            exported = glb
         } catch {
             warning = "Showing simplified shapes only. " + error.localizedDescription
         }
-        return LoadedBoard(url: url, components: components, model: model,
+        return LoadedBoard(url: url, components: components, model: model, glb: exported,
                            filledModels: model == nil ? 0 : patch?.count ?? 0, warning: warning)
     }
 }

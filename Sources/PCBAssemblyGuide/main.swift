@@ -5,6 +5,7 @@ import SceneKit
 // Command-line modes used by the build script and for checking the 3D pipeline without a window:
 //   --icon <out.png>                                  draws the app icon
 //   --snapshot <board.kicad_pcb> <out.png> [step|all]  renders one step; add --flat, --bottom, --list, --check
+//   --export-web <board.kicad_pcb> <out.html>          writes the guide as a single web page
 let arguments = CommandLine.arguments
 
 func writePNG(_ image: CGImage, to path: String) throws {
@@ -76,6 +77,15 @@ do {
     if let flag = arguments.firstIndex(of: "--icon"), arguments.count > flag + 1 {
         guard let icon = drawIcon() else { throw LoadError(message: "Could not draw the icon.") }
         try writePNG(icon, to: arguments[flag + 1])
+        exit(0)
+    }
+
+    if let flag = arguments.firstIndex(of: "--export-web"), arguments.count >= flag + 3 {
+        let board = try BoardLoader.load(url: URL(fileURLWithPath: arguments[flag + 1]),
+                                         fillModels: !arguments.contains("--no-fill"))
+        let output = URL(fileURLWithPath: arguments[flag + 2])
+        try WebExport.write(board: board, plan: AssemblyPlan(components: board.components), to: output)
+        print("Wrote \(output.path): \(board.components.count) components; \(board.warning ?? "3D model included")")
         exit(0)
     }
 
