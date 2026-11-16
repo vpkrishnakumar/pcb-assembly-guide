@@ -63,7 +63,9 @@ struct KitRow: Identifiable {
                    footprint: members[0].footprint,
                    refs: members.map(\.ref).sorted { $0.compare($1, options: .numeric) == .orderedAscending })
         }.sorted {
-            $0.kind != $1.kind ? $0.kind < $1.kind : $0.value.compare($1.value, options: .numeric) == .orderedAscending
+            if $0.kind != $1.kind { return $0.kind < $1.kind }
+            let order = $0.value.compare($1.value, options: .numeric)
+            return order != .orderedSame ? order == .orderedAscending : $0.footprint < $1.footprint
         }
     }
 }

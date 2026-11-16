@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img alt="Platform: macOS 14+" src="https://img.shields.io/badge/platform-macOS%2014%2B-blue">
+  <img alt="Platforms: macOS app, Linux and Windows command line" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue">
   <img alt="Swift 5.9+" src="https://img.shields.io/badge/Swift-5.9%2B-orange">
   <img alt="KiCad 10" src="https://img.shields.io/badge/KiCad-10-314cb0">
   <a href="LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/badge/licence-MIT-green"></a>
@@ -67,6 +67,31 @@ cd pcb-assembly-guide
 `./build.sh` builds `build/PCB Assembly Guide.app`. Adding `install` also copies it to `/Applications`.
 
 The app is ad-hoc signed. If you copy a build to another Mac, right-click it and choose Open the first time.
+
+## Linux and Windows
+
+The Mac app's window does not run on other systems, but the guide does. A small command-line tool reads the board and writes the same web guide, then opens it in your browser:
+
+```sh
+git clone https://github.com/vpkrishnakumar/pcb-assembly-guide.git
+python3 pcb-assembly-guide/cli/pcb_assembly_guide.py my-board.kicad_pcb
+```
+
+It needs Python 3.8 or later and nothing else: no packages to install. On Windows use `py` instead of `python3`.
+
+With KiCad 8 or later installed, the page shows the board in 3D. The tool looks for `kicad-cli` on your `PATH`, then in the usual install locations (including the snap and Flatpak packages). If yours is somewhere else, set `KICAD_CLI=/path/to/kicad-cli`. Without KiCad you still get the full guide, with parts drawn as simple boxes.
+
+| Option | Effect |
+|---|---|
+| `-o guide.html` | Where to write the page. The default is `<board>-assembly-guide.html` in the current folder. |
+| `--order top-first` | Soldering order: `smd-first` (default), `top-first`, `bottom-first` or `smallest-first`. |
+| `--no-3d` | Skip the KiCad export and draw simple boxes. |
+| `--no-fill` | Do not borrow KiCad library models for chip parts that have none. |
+| `--no-open` | Do not open the browser afterwards. |
+
+The tool never writes into your KiCad project; exports are cached in `~/.cache/pcb-assembly-guide`.
+
+It runs on macOS too, and produces the same page as the app's **Export Web Guide**. Automated tests check that the two agree.
 
 ## Using it
 
@@ -141,11 +166,15 @@ The binary can render a step without opening a window, which is useful for check
 - Switches and some connectors get no orientation mark.
 - IC top markings are not predicted; the app links to the datasheet instead.
 - Voice control is experimental.
-- Developed and tested on Apple Silicon with KiCad 10 only.
+- The Mac app is developed and tested on Apple Silicon with KiCad 10 only.
+- On Linux and Windows the guide runs in the browser; there is no native window. Notes, batches of boards, drag-to-reorder and voice control are Mac-only.
+- The Flatpak and snap KiCad packages are detected but have had little testing.
 
 ## Contributing
 
 Issues and pull requests are welcome. If a board loads wrongly, a small `.kicad_pcb` that reproduces it helps most.
+
+The board parsing, polarity and ordering logic exists twice: in Swift for the Mac app and in `cli/pcb_assembly_guide.py` for other systems. A change to one needs the same change in the other; the build checks that both write the same guide for `tests/fixtures/sample.kicad_pcb`. Run the tests with `python3 -m unittest discover -s tests`.
 
 Note for contributors building without Xcode: the Command Line Tools do not ship the SwiftUI macro plugin, so `@State` does not compile. View state lives in `AppModel` as `@Published` properties for that reason.
 

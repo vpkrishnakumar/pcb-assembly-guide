@@ -6,14 +6,63 @@ on:
   pull_request:
 
 jobs:
-  build:
+  mac-app:
+    name: Mac app
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - name: Build the app
         run: ./build.sh
+      - name: Check the Mac app and the command-line tool write the same guide
+        run: |
+          .build/release/PCBAssemblyGuide --export-web tests/fixtures/sample.kicad_pcb mac.html
+          python3 cli/pcb_assembly_guide.py tests/fixtures/sample.kicad_pcb -o cli.html --no-open
+          python3 tests/compare_guides.py mac.html cli.html
       - name: Upload the app
         uses: actions/upload-artifact@v4
         with:
           name: PCB-Assembly-Guide
           path: build/*.app
+
+  cli:
+    name: Command-line tool (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-22.04, python: "3.8" }
+          - { os: ubuntu-24.04, python: "3.13" }
+          - { os: windows-latest, python: "3.13" }
+          - { os: macos-15, python: "3.13" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Run the tests
+        run: python -m unittest discover -s tests -v
+      - name: Write a guide without KiCad
+        run: python cli/pcb_assembly_guide.py tests/fixtures/sample.kicad_pcb -o guide.html --no-open
+
+  linux-kicad:
+    name: Linux with KiCad 10 (3D export)
+    runs-on: ubuntu-24.04
+    # Depends on the KiCad package archive being reachable, so it does not block the build.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install KiCad
+        run: |
+          sudo add-apt-repository --yes ppa:kicad/kicad-10.0-releases
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends kicad kicad-packages3d
+      - name: Write a guide with the 3D board
+        run: |
+          kicad-cli version
+          python3 cli/pcb_assembly_guide.py tests/fixtures/sample.kicad_pcb -o guide.html --no-open
+          python3 tests/compare_guides.py --require-3d guide.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sample-guide-linux
+          path: guide.html

@@ -5,3 +5,7 @@ build/
 xcuserdata/
 DerivedData/
 .DS_Store
+__pycache__/
+*.pyc
+*-assembly-guide.html
+*.kicad_prl
