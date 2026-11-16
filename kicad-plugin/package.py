@@ -1,8 +1,9 @@
 """Builds the KiCad plugin package:  python3 kicad-plugin/package.py
 
 Writes build/pcb-assembly-guide-kicad-plugin-<version>.zip, which installs with KiCad's
-Plugin and Content Manager (Install from File...). Also prints the download_* values the
-official KiCad repository asks for.
+Plugin and Content Manager (Install from File...). Also writes build/kicad-repository/<identifier>/,
+the folder the official KiCad repository asks for, which expects the archive to be attached to the
+GitHub release tagged v<version>.
 """
 import hashlib
 import json
@@ -44,8 +45,17 @@ def main():
             archive.writestr(info, data)
     packed = output.read_bytes()
     print("Wrote %s" % output)
-    print(json.dumps({"download_sha256": hashlib.sha256(packed).hexdigest(), "download_size": len(packed),
-                      "install_size": installed}, indent=2))
+    # The copy of the metadata that goes in KiCad's repository also says where the archive is and what it weighs.
+    listing = json.loads(json.dumps(metadata))
+    listing["versions"][0].update({
+        "download_url": "%s/releases/download/v%s/%s" % (metadata["resources"]["homepage"], version, output.name),
+        "download_sha256": hashlib.sha256(packed).hexdigest(), "download_size": len(packed),
+        "install_size": installed})
+    submission = ROOT / "build" / "kicad-repository" / metadata["identifier"]
+    submission.mkdir(parents=True, exist_ok=True)
+    (submission / "metadata.json").write_text(json.dumps(listing, indent=2) + "\n", encoding="utf-8")
+    (submission / "icon.png").write_bytes((HERE / "icon-64.png").read_bytes())
+    print("Wrote %s (for a merge request to gitlab.com/kicad/addons/metadata, under packages/)" % submission)
     return 0
 
 
