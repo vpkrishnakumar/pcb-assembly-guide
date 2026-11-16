@@ -100,7 +100,7 @@ The same guide is one click away inside KiCad. The plugin adds an **Assembly Gui
 
 To install it:
 
-1. Build the package: `python3 kicad-plugin/package.py` writes `build/pcb-assembly-guide-kicad-plugin-<version>.zip`. It needs only Python.
+1. Download `pcb-assembly-guide-kicad-plugin-<version>.zip` from the [latest release](https://github.com/vpkrishnakumar/pcb-assembly-guide/releases/latest). To build it yourself, run `python3 kicad-plugin/package.py`; it is written to `build/`.
 2. In KiCad's main window open **Plugin and Content Manager**, choose **Install from File…** and pick the zip.
 3. Open a board in the PCB editor. The button is on the top toolbar, and under **Tools > External Plugins**.
 
